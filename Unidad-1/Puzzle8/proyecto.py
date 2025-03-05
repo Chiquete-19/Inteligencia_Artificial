@@ -1,117 +1,93 @@
+import heapq
+import copy
+import time
+
 class Nodo:
-    def __init__(self, datos, nivel,fval, padre):
+    def __init__(self, datos, nivel, fval, padre=None):
         self.datos = datos
         self.nivel = nivel
         self.fval = fval
         self.padre = padre
-    
-    def genera_hijos(self):
-        x,y = self.buscar(self.datos,'_')
-        
-        lista_valores = [[x,y-1],[x,y+1],[x-1,y],[x+1,y]]
+
+    def __lt__(self, otro):
+        return self.fval < otro.fval
+
+    def generar_hijos(self):
+        x, y = self.buscar(0)  # 0 representa el espacio vacío
+        movimientos = [(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]
         hijos = []
         
-        for i in lista_valores:
-            hijo = self.mezclar(self.datos,x,y,i[0],i[1])
-            if hijo is not None:
-                nodo_hijo = Nodo(hijo, self.nivel+1,0, self)
-                hijos.append(nodo_hijo)
+        for nx, ny in movimientos:
+            if 0 <= nx < 3 and 0 <= ny < 3:
+                nuevo_estado = copy.deepcopy(self.datos)
+                nuevo_estado[x][y], nuevo_estado[nx][ny] = nuevo_estado[nx][ny], nuevo_estado[x][y]
+                hijos.append(Nodo(nuevo_estado, self.nivel + 1, 0, self))
+        
         return hijos
-    
-    def mezclar(self,puz,x1,y1,x2,y2):
-        if x2>= 0 and x2 < len(self.datos) and y2 >= 0 and y2 < len(self.datos):
-            temp_puz = []
-            temp_puz = self.copiar(puz)
-            temp = temp_puz[x2][y2]
-            temp_puz[x2][y2] = temp_puz[x1][y1]
-            temp_puz[x1][y1]=temp
-            return temp_puz
-        else:
-            return None
-    
-    def copiar(self, root):
-        temp = []
-        for i in root:
-            t = []
-            for j in i:
-                t.append(j)
-            temp.append(t)
-        return temp
-    
-    def buscar(self, puz, x):
-        for i in range(0,len(self.datos)):
-            for j in range(0,len(self.datos)):
-                if puz[i][j] == x:
-                    return i,j
-                
-    def imprimir_ruta(self,raiz):
-        if raiz == None:
-            return
-        raiz.imprimir_ruta(raiz.padre)
-        print("-------")
-        
-        raiz.imprimirse()
-        
-        
-    def imprimirse(self):
-        for i in self.datos:
-            for j in i:
-                print(j, end=" ")
-            print("")
-        
-class Puzzle:
-    def __init__(self, tam):
-        self.n =tam
-        self.abierto = []
-        self.cerrado = []
-    
-    def aceptar(self):
-        puz = []
-        for i in range(0,self.n):
-            temp = input().split(" ")
-            puz.append(temp)
-        return puz
-    
-    def f(self, inicio,final):
-        return self.h(inicio.datos,final)+inicio.nivel
 
-    def h(self,inicio,final):
-        temp = 0
-        for i in range(0, self.n):
-            for j in range(0, self.n):
-                if inicio[i][j] != final[i][j] and inicio[i][j] != '_':
-                    temp +=1
-        return temp
-    
-    def proceso(self):
-        print("Ingresa el estado inicial del puzzle \n")
-        inicio = [['1','2','3'],['4','5','6'],['7','_','8']] #self.aceptar()
-        print("Ingresa el estado final del puzzle")
-        final = [['1','2','3'],['4', '5','6'],['7','8','_']] #self.aceptar()
+    def buscar(self, valor):
+        for i in range(3):
+            for j in range(3):
+                if self.datos[i][j] == valor:
+                    return i, j
+        return None
+
+    def imprimir_ruta(self):
+        if self.padre:
+            self.padre.imprimir_ruta()
+        print("-------")
+        for fila in self.datos:
+            print(" ".join(map(str, fila)))
+
+class Puzzle:
+    def __init__(self):
+        self.abierto = []
+        self.cerrado = set()
+
+    def heuristica(self, actual, objetivo):
+        """Heurística de Manhattan"""
+        distancia = 0
+        for i in range(3):
+            for j in range(3):
+                if actual[i][j] != 0:
+                    x, y = self.buscar_posicion(objetivo, actual[i][j])
+                    distancia += abs(i - x) + abs(j - y)
+        return distancia
+
+    def buscar_posicion(self, estado, valor):
+        for i in range(3):
+            for j in range(3):
+                if estado[i][j] == valor:
+                    return i, j
+        return None
+
+    def resolver(self, inicio, objetivo):
+        inicio_tiempo = time.time()
+        nodo_inicial = Nodo(inicio, 0, 0)
+        nodo_inicial.fval = self.heuristica(inicio, objetivo)
+        heapq.heappush(self.abierto, nodo_inicial)
+        movimientos = 0
         
-        inicio = Nodo(inicio,0,0, None)
-        inicio.fval = self.f(inicio,final)
-        
-        self.abierto.append(inicio)
-        
-        print("\n\n")
-        print("Procesando...\n")
-        while True:
-            print("...")
-            act = self.abierto[0]
+        while self.abierto:
+            actual = heapq.heappop(self.abierto)
+            movimientos += 1
+            if actual.datos == objetivo:
+                fin_tiempo = time.time()
+                actual.imprimir_ruta()
+                print("Solución encontrada en {} movimientos".format(actual.nivel))
+                print("Tiempo de ejecución: {:.4f} segundos".format(fin_tiempo - inicio_tiempo))
+                return
             
-            if(self.h(act.datos,final) ==0):
-                act.imprimir_ruta(act)
-                break
-            for i in act.genera_hijos():
-                i.fval = self.f(i,final)
-                self.abierto.append(i)
-            self.cerrado.append(act)
-            del self.abierto[0]
-            
-            self.abierto.sort(key = lambda x:x.fval,reverse =False)
+            self.cerrado.add(tuple(map(tuple, actual.datos)))
+            for hijo in actual.generar_hijos():
+                if tuple(map(tuple, hijo.datos)) not in self.cerrado:
+                    hijo.fval = hijo.nivel + self.heuristica(hijo.datos, objetivo)
+                    heapq.heappush(self.abierto, hijo)
+        
+        print("No se encontró solución")
 
 if __name__ == '__main__':
-    puz = Puzzle(3)
-    puz.proceso()
-   
+    estado_inicial = [[1, 0, 3], [4, 6, 7], [2, 5, 8]]
+    estado_objetivo = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+    puzzle = Puzzle()
+    puzzle.resolver(estado_inicial, estado_objetivo)
