@@ -13,7 +13,7 @@ class Nodo:
         return self.fval < otro.fval
 
     def generar_hijos(self):
-        x, y = self.buscar(0)  # 0 representa el espacio vacío
+        x, y = self.buscar(0)
         movimientos = [(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)]
         hijos = []
         
@@ -45,7 +45,6 @@ class Puzzle:
         self.cerrado = set()
 
     def heuristica(self, actual, objetivo):
-        """Heurística de Manhattan"""
         distancia = 0
         for i in range(3):
             for j in range(3):
