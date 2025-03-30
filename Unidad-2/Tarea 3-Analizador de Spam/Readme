@@ -1,0 +1,5 @@
+Clasificador de Spam con Naïve Bayes
+Este proyecto implementa un clasificador de spam utilizando Naïve Bayes Multinomial y 
+técnicas de Procesamiento de Lenguaje Natural para detectar correos electrónicos no deseados.
+Se utiliza el dataset de SpamAssassin.
+
