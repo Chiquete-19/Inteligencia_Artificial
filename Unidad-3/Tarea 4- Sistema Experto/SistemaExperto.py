@@ -1,5 +1,4 @@
 # Sistema experto para análisis financiero personal
-
 def evaluar_ahorro(porcentaje_ahorro, umbral_saludable):
     if porcentaje_ahorro >= umbral_saludable:
         return "saludable"
@@ -60,7 +59,6 @@ def recomendaciones_deuda(nivel_deuda, ahorro):
             acciones.insert(3, " 3. Ahorro automático mínimo")
     return acciones
 
-# Ejemplo de uso
 if __name__ == "__main__":
     ingreso_mensual = float(input("Ingrese su ingreso mensual: "))
     gastos_fijos = float(input("Ingrese el total de sus gastos fijos: "))
